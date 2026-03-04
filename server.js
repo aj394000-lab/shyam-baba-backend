@@ -89,7 +89,7 @@ app.get("/api/orders", async (req, res) => {
 });
 
 app.put("/api/orders/:id", async (req, res) => {
-    const updated = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+    const updated = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { returnDocument: 'after' });
     res.json(updated);
 });
 
@@ -101,4 +101,5 @@ app.get("/api/order-status/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => console.log(`Server is running on port ${PORT} 🚀`));
