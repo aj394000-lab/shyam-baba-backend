@@ -20,7 +20,7 @@ mongoose.connect("mongodb+srv://TeamAKSH:AKSH%402006@cluster0.cb7zcxn.mongodb.ne
 cloudinary.config({
     cloud_name: 'dt9r3kjva',
     api_key: '717345448327714',
-    api_secret: 'TUMHARA_API_SECRET_YAHAN_PASTE_KARO' // 🔒 Apne Notepad se 'br4mkz...' wali key yahan daalo
+    api_secret: 'br4mkz-UshqvMFAMGcBXlte62rk' // 🔒 Apne Notepad se 'br4mkz...' wali key yahan daalo
 });
 
 const storage = new CloudinaryStorage({
@@ -111,4 +111,5 @@ app.get("/api/order-status/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => console.log(`Server is running on port ${PORT} 🚀`));
