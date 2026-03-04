@@ -3,6 +3,8 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const multer = require("multer"); 
 const path = require("path");    
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 const app = express();
 app.use(express.json()); 
@@ -14,32 +16,40 @@ mongoose.connect("mongodb+srv://TeamAKSH:AKSH%402006@cluster0.cb7zcxn.mongodb.ne
     .then(() => console.log("MongoDB Connected Successfully! ✅"))
     .catch((err) => console.log("MongoDB Connection Error: ", err));
 
+// ☁️ Cloudinary Setup (Photo Godown)
+cloudinary.config({
+    cloud_name: 'dt9r3kjva',
+    api_key: '717345448327714',
+    api_secret: 'TUMHARA_API_SECRET_YAHAN_PASTE_KARO' // 🔒 Apne Notepad se 'br4mkz...' wali key yahan daalo
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'shyam-baba-products',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
+    }
+});
+const upload = multer({ storage: storage });
+
 // Schemas
 const productSchema = new mongoose.Schema({
     name: String, price: Number, images: [String], description: String, category: String 
 });
 const Product = mongoose.model("Product", productSchema);
 
-// server.js mein is jagah ko dhoondo aur replace karo
 const orderSchema = new mongoose.Schema({
     customerName: String, 
     phone: String, 
     address: String, 
     paymentMethod: String,
-    transactionId: String, // 🚀 NAYA: Payment ka UTR number save karne ke liye
+    transactionId: String, 
     items: Array, 
     totalAmount: Number, 
     status: { type: String, default: 'Pending' },
     date: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
-
-// Multer Config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'images/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage: storage });
 
 // --- ADMIN LOGIN ---
 app.post("/api/admin/login", (req, res) => {
@@ -54,8 +64,8 @@ app.post("/api/admin/login", (req, res) => {
 // --- PRODUCT APIs ---
 app.post("/api/products", upload.array('images', 5), async (req, res) => {
     try {
-        const filenames = req.files.map(file => file.filename);
-        const newProduct = new Product({ ...req.body, images: filenames });
+        const imageUrls = req.files.map(file => file.path); // 🚀 NAYA: Ab direct Cloudinary ki link save hogi
+        const newProduct = new Product({ ...req.body, images: imageUrls });
         await newProduct.save();
         res.json({ message: "Product Uploaded! 🎉" });
     } catch (err) { res.status(500).json({ message: "Upload failed" }); }
@@ -65,7 +75,6 @@ app.get("/api/products", async (req, res) => {
     res.json(await Product.find()); 
 });
 
-// 🚀 YE WALI API MISSING THI (Product Detail Page ke liye zaroori hai)
 app.get("/api/products/:id", async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -89,6 +98,7 @@ app.get("/api/orders", async (req, res) => {
 });
 
 app.put("/api/orders/:id", async (req, res) => {
+    // 🚀 NAYA: Mongoose ka deprecation warning fix kar diya 'returnDocument' lagakar
     const updated = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { returnDocument: 'after' });
     res.json(updated);
 });
@@ -101,5 +111,4 @@ app.get("/api/order-status/:id", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => console.log(`Server is running on port ${PORT} 🚀`));
